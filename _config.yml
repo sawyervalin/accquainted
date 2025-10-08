@@ -16,6 +16,8 @@ app_description                           : Campus social and dating for UCI ACC
 
 enable_smart_app_banner                   : true
 
+url: https://accquainted.com
+baseurl: ""
 
 
 # Information About Yourself
