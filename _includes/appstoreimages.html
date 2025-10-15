@@ -1,71 +1,74 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 
 {% if site.ios_app_id %}
-
 <script>
+$(function () {
+  var apiURL = "https://itunes.apple.com/lookup?id={{ site.ios_app_id }}&country={{ site.ios_app_country }}&callback=?";
 
-$(function() {
+  // Prefer TestFlight if provided
+  var testFlightUrl = "{{ site.testflight_public_link | default: '' }}".trim();
 
-    var apiURL = "https://itunes.apple.com/lookup?id={{ site.ios_app_id }}&country={{ site.ios_app_country }}&callback=?";
+  $.getJSON(apiURL, function (json) {
+    if (json.results && json.results.length) {
+      var appInfo = json.results[0];
 
-    $.getJSON(apiURL, function(json) {
+      // favicon
+      $('link[rel="shortcut icon"]').attr("href", appInfo.artworkUrl512);
 
-        if (json.results && json.results.length) {
+      // title
+      var $pageTitle = $(".pageTitle");
+      if ($.trim($pageTitle.text()).length === 0) $pageTitle.html(appInfo.trackName);
 
-            console.info("Image strings loaded from Apple API.");
-            var appInfo = json.results[0];
+      // large icon
+      var $appIconLarge = $(".appIconLarge");
+      if (!$appIconLarge.attr("src")) $appIconLarge.attr("src", appInfo.artworkUrl512);
 
-            // Set favicon
-            $('link[rel="shortcut icon"]').attr("href", appInfo.artworkUrl512);
+      // header icon
+      var $appIconHeader = $(".headerIcon");
+      if (!$appIconHeader.attr("src")) $appIconHeader.attr("src", appInfo.artworkUrl512);
 
-            // Set page title using the iOS app ID if it is not set manually in _config.yml
-            var $pageTitle = $(".pageTitle");
-            if ($.trim($($pageTitle).text()).length == 0) {
-                $($pageTitle).html(appInfo.trackName);
-            }
+      // names
+      var $appName = $(".appName");
+      if ($.trim($appName.text()).length === 0) $appName.html(appInfo.trackName);
 
-            // Set large app icon using the iOS app ID if it is not set manually in _config.yml
-            var $appIconLarge = $(".appIconLarge");
-            if (!$appIconLarge.attr('src')) {
-                $($appIconLarge).attr("src", appInfo.artworkUrl512);
-            }
+      var $headerName = $(".headerName");
+      if ($.trim($headerName.text()).length === 0) $headerName.html(appInfo.trackName);
 
-            // Set header app icon using the iOS app ID if it is not set manually in _config.yml
-            var $appIconHeader = $(".headerIcon");
-            if (!$appIconHeader.attr('src')) {
-                $($appIconHeader).attr("src", appInfo.artworkUrl512);
-            }
+      // price
+      var $appPrice = $(".appPrice");
+      if ($.trim($appPrice.text()).length === 0) $appPrice.html(appInfo.formattedPrice);
 
-            // Set app name using the iOS app ID if it is not set manually in _config.yml
-            var $appName = $(".appName");
-            if ($.trim($($appName).text()).length == 0) {
-                $($appName).html(appInfo.trackName);
-            }
+      // links
+      var appStoreUrl = appInfo.trackViewUrl;
 
-            // Set the name displayed in the header if it is not set manually in _config.yml
-            var $headerName = $(".headerName");
-            if ($.trim($($headerName).text()).length == 0) {
-                $($headerName).html(appInfo.trackName);
-            }
-
-            // Set price using the iOS app ID if it is not set manually in _config.yml
-            var $appPrice = $(".appPrice");
-            if ($.trim($($appPrice).text()).length == 0) {
-                $($appPrice).html(appInfo.formattedPrice);
-            }
-
-            // Set App Store link using the iOS app ID if it is not set manually in _config.yml
-            var $appStoreLink = $(".appStoreLink");
-            if ($.trim($appStoreLink.attr('href')).length == 0) {
-                $($appStoreLink).attr("href", appInfo.trackViewUrl);
-            }
-
-            console.info(appInfo);
-
+      if (testFlightUrl) {
+        // Make TestFlight the primary CTA
+        var $tf = $(".testFlightLink");
+        if ($tf.length) {
+          if (!$tf.attr("href")) $tf.attr("href", testFlightUrl);
+          if ($.trim($tf.text()).length === 0) $tf.text("Join the beta on TestFlight");
+          $tf.show();
         }
-    });  
+
+        // Keep App Store as secondary
+        var $as = $(".appStoreLink");
+        if ($as.length) {
+          if (!$as.attr("href")) $as.attr("href", appStoreUrl);
+          if ($.trim($as.text()).length === 0) $as.text("View on the App Store");
+          $as.show();
+        }
+      } else {
+        // No TestFlight link, fall back to App Store primary
+        var $asOnly = $(".appStoreLink");
+        if ($asOnly.length) {
+          if (!$asOnly.attr("href")) $asOnly.attr("href", appStoreUrl);
+          if ($.trim($asOnly.text()).length === 0) $asOnly.text("View on the App Store");
+          $asOnly.show();
+        }
+        $(".testFlightLink").hide();
+      }
+    }
+  });
 });
-
 </script>
-
 {% endif %}
